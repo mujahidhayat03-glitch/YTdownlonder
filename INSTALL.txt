@@ -1,0 +1,12 @@
+Pehle Node.js install karo:
+
+1. Download karo: https://nodejs.org/en/download
+2. LTS version install karo (default settings)
+3. Install hone ke baad terminal restart karo
+4. Phir ye command run karo:
+
+cd "C:\Users\METRO\Downloads\websit\YT downlonder"
+npm install
+npm start
+
+Server chal jayega: http://localhost:3000

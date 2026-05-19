@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YT Downloader - Free Video Downloader</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --red: #ff0000; --red-dark: #cc0000; --dark: #0f0f0f;
+            --card: #1a1a1a; --input-bg: #272727; --text: #f1f1f1;
+            --text-muted: #aaa; --border: #333; --green: #2ecc71;
+        }
+        body { font-family: 'Roboto', 'Segoe UI', sans-serif; background: var(--dark); color: var(--text); min-height: 100vh; }
+        .navbar { background: var(--card); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+        .logo { display: flex; align-items: center; gap: 0.5rem; font-size: 1.5rem; font-weight: 700; color: var(--red); text-decoration: none; }
+        .logo svg { width: 32px; height: 32px; }
+        .hero { text-align: center; padding: 4rem 1rem 2rem; max-width: 800px; margin: 0 auto; }
+        .hero h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+        .hero h1 span { color: var(--red); }
+        .hero p { color: var(--text-muted); font-size: 1.1rem; }
+        .search-box { max-width: 700px; margin: 0 auto 3rem; padding: 0 1rem; }
+        .input-wrapper { display: flex; background: var(--input-bg); border-radius: 50px; overflow: hidden; border: 2px solid var(--border); transition: border-color 0.3s; }
+        .input-wrapper:focus-within { border-color: var(--red); }
+        .input-wrapper input { flex: 1; background: transparent; border: none; padding: 1rem 1.5rem; color: var(--text); font-size: 1rem; outline: none; }
+        .input-wrapper input::placeholder { color: var(--text-muted); }
+        .input-wrapper button { background: var(--red); color: white; border: none; padding: 1rem 2rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
+        .input-wrapper button:hover { background: var(--red-dark); }
+        .hidden { display: none !important; }
+        #loading { text-align: center; padding: 2rem; }
+        .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--red); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .download-section { max-width: 700px; margin: 0 auto 3rem; padding: 0 1rem; }
+        .video-info { display: flex; gap: 1rem; background: var(--card); padding: 1rem; border-radius: 1rem; border: 1px solid var(--border); margin-bottom: 1.5rem; align-items: center; }
+        .video-info img { width: 160px; height: 90px; object-fit: cover; border-radius: 0.75rem; }
+        .video-info h3 { font-size: 1rem; margin-bottom: 0.25rem; }
+        .video-info p { color: var(--text-muted); font-size: 0.85rem; }
+        .download-card { background: var(--card); border-radius: 1rem; border: 1px solid var(--border); overflow: hidden; }
+        .download-card-header { background: var(--green); padding: 1rem 1.5rem; font-weight: 600; font-size: 1.1rem; }
+        .tabs { display: flex; gap: 0.5rem; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); }
+        .tab { background: transparent; border: none; color: var(--text-muted); padding: 0.5rem 1rem; cursor: pointer; border-radius: 0.5rem; transition: all 0.2s; font-size: 0.95rem; }
+        .tab:hover { color: var(--text); background: var(--input-bg); }
+        .tab.active { color: white; background: var(--red); }
+        .tab-content { padding: 1.5rem; display: grid; gap: 0.75rem; }
+        .dl-link { display: flex; justify-content: space-between; align-items: center; background: var(--input-bg); padding: 1rem; border-radius: 0.5rem; text-decoration: none; color: var(--text); transition: background 0.2s; cursor: pointer; border: none; width: 100%; font-size: inherit; }
+        .dl-link:hover { background: var(--border); }
+        .dl-link .quality { font-weight: 600; font-size: 1.1rem; }
+        .dl-link .format { color: var(--text-muted); font-size: 0.85rem; }
+        .dl-link .btn { background: var(--green); color: white; padding: 0.5rem 1.25rem; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 600; }
+        #error { max-width: 700px; margin: 0 auto 2rem; padding: 0 1rem; text-align: center; }
+        .error-msg { background: rgba(239,68,68,0.1); border: 1px solid var(--red); padding: 1rem; border-radius: 0.75rem; color: var(--red); }
+        footer { text-align: center; padding: 2rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.85rem; }
+        @media (max-width: 640px) {
+            .hero h1 { font-size: 1.75rem; }
+            .input-wrapper { flex-direction: column; border-radius: 1rem; }
+            .input-wrapper button { border-radius: 0 0 1rem 1rem; }
+            .video-info { flex-direction: column; text-align: center; }
+            .video-info img { width: 100%; height: auto; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="logo">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+            YT Downloader
+        </a>
+    </nav>
+
+    <section class="hero">
+        <h1>Free <span>Video Downloader</span></h1>
+        <p>Download from YouTube, Facebook, Instagram, Twitter, TikTok in HD quality</p>
+    </section>
+
+    <div class="search-box">
+        <div class="input-wrapper">
+            <input type="url" id="videoUrl" placeholder="Paste video URL here..." autocomplete="off">
+            <button onclick="fetchVideo()">Download</button>
+        </div>
+    </div>
+
+    <div id="loading" class="hidden">
+        <div class="spinner"></div>
+        <p id="loadingText">Fetching video info...</p>
+    </div>
+
+    <div id="error" class="hidden">
+        <div class="error-msg" id="errorText"></div>
+    </div>
+
+    <div id="resultSection" class="download-section hidden">
+        <div class="video-info">
+            <img id="thumb" src="" alt="">
+            <div>
+                <h3 id="vidTitle"></h3>
+                <p id="vidMeta"></p>
+            </div>
+        </div>
+        <div class="download-card">
+            <div class="download-card-header">Select Quality & Download</div>
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('video', this)">Video MP4</button>
+                <button class="tab" onclick="switchTab('audio', this)">Audio MP3</button>
+            </div>
+            <div id="videoTab" class="tab-content"></div>
+            <div id="audioTab" class="tab-content hidden"></div>
+        </div>
+    </div>
+
+    <footer><p>YouTube, Facebook, Instagram, Twitter, TikTok, Vimeo & more</p></footer>
+
+    <script>
+        let currentUrl = '';
+
+        function show(id) { document.getElementById(id).classList.remove('hidden'); }
+        function hide(id) { document.getElementById(id).classList.add('hidden'); }
+        function err(msg) { document.getElementById('errorText').textContent = msg; show('error'); }
+        function load(txt) { document.getElementById('loadingText').textContent = txt; show('loading'); }
+
+        async function fetchVideo() {
+            const url = document.getElementById('videoUrl').value.trim();
+            if (!url) { err('Please paste a video URL'); return; }
+
+            currentUrl = url;
+            hide('error'); hide('resultSection');
+            load('Fetching video info...');
+
+            try {
+                const res = await fetch(`/api/info?url=${encodeURIComponent(url)}`);
+                const data = await res.json();
+                hide('loading');
+
+                if (data.error) { err(data.error); return; }
+
+                document.getElementById('thumb').src = data.thumbnail || '';
+                document.getElementById('vidTitle').textContent = data.title || 'Video';
+                const dur = data.duration ? `${Math.floor(data.duration / 60)}m ${data.duration % 60}s` : '';
+                document.getElementById('vidMeta').textContent = `${data.uploader || ''} ${dur ? '• ' + dur : ''}`.trim();
+
+                const videoTab = document.getElementById('videoTab');
+                const audioTab = document.getElementById('audioTab');
+                videoTab.innerHTML = '';
+                audioTab.innerHTML = '';
+
+                if (data.videoFormats && data.videoFormats.length > 0) {
+                    data.videoFormats.forEach(f => {
+                        const btn = document.createElement('button');
+                        btn.className = 'dl-link';
+                        btn.onclick = () => download(f.formatId, 'video', f.quality);
+                        const size = f.filesize ? ` • ${(f.filesize / 1024 / 1024).toFixed(1)} MB` : '';
+                        btn.innerHTML = `
+                            <div><div class="quality">${f.quality}</div><div class="format">MP4${size}</div></div>
+                            <div class="btn">⬇ Download</div>
+                        `;
+                        videoTab.appendChild(btn);
+                    });
+                } else {
+                    videoTab.innerHTML = '<p style="color:var(--text-muted)">No video formats available</p>';
+                }
+
+                if (data.audioFormats && data.audioFormats.length > 0) {
+                    data.audioFormats.forEach(f => {
+                        const btn = document.createElement('button');
+                        btn.className = 'dl-link';
+                        btn.onclick = () => download(f.formatId, 'audio', f.quality);
+                        btn.innerHTML = `
+                            <div><div class="quality">${f.quality}</div><div class="format">MP3</div></div>
+                            <div class="btn">⬇ Download</div>
+                        `;
+                        audioTab.appendChild(btn);
+                    });
+                } else {
+                    audioTab.innerHTML = '<p style="color:var(--text-muted)">No audio formats available</p>';
+                }
+
+                show('resultSection');
+            } catch (e) {
+                hide('loading');
+                err('Failed to fetch video. Check URL and try again.');
+            }
+        }
+
+        async function download(formatId, type, quality) {
+            load(`Downloading ${quality} ${type === 'audio' ? 'MP3' : 'MP4'}...`);
+
+            const a = document.createElement('a');
+            a.href = `/api/download?url=${encodeURIComponent(currentUrl)}&formatId=${formatId}&type=${type}`;
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            setTimeout(() => hide('loading'), 2000);
+        }
+
+        function switchTab(tab, btn) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            btn.classList.add('active');
+            document.getElementById(tab + 'Tab').classList.remove('hidden');
+        }
+
+        document.getElementById('videoUrl').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') fetchVideo();
+        });
+    </script>
+</body>
+</html>
